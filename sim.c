@@ -29,6 +29,19 @@ void printArr(bool * arr, int len)
 	printf("\n");
 }
 
+void printDArr(double * arr, int len)
+{
+	int i;
+	for (i=0; i<len; i++)
+	{
+		printf("%f", arr[i] );
+		if (i!=(len-1))
+			printf(",");
+	}
+	printf("\n");
+}
+
+
 void genspconf(bool * arr, int len)
 {
 	int i;
@@ -38,7 +51,7 @@ void genspconf(bool * arr, int len)
 
 double calcdE(bool * arr, int index, int len, double j, double h)
 {
-	//dE = -J ( arr[i+1] + arr[i-1] ) ( -2arr[i] )
+	//dE = -J( arr[i+1] + arr[i-1] )( arr_n[i] - arr_o[i] ) -H( arr_n[i] - arr_o[i] )
 	int a = arr[index] ? -2:2;
 	int b;
 	
@@ -53,7 +66,7 @@ double calcdE(bool * arr, int index, int len, double j, double h)
 	else //same sign, negative
 		b=-2;
 
-	return (j*a*b+h*a);
+	return -(j*a*b+h*a);
 }
 
 
@@ -76,27 +89,42 @@ int main(int argc, char *argv[])
 	
 	bool * spconf;
 	spconf = malloc(rows * sizeof(bool));
+	double * energy;
+	energy = malloc(numItr * sizeof(double));
 
 	genspconf(spconf, rows);
-	printArr(spconf, rows);
+	//printArr(spconf, rows);
 
 	int i;
+	double en = 0;
 	for(i=0; i<numItr; i++)
 	{
 		int rindex = rand() % (rows+1);
-		double deltaE = -calcdE(spconf, rindex, rows, J, H);
-		
+		double deltaE = calcdE(spconf, rindex, rows, J, H);
+
 		if(deltaE <= 0)
+		{
 			spconf[rindex] = !spconf[rindex];
+			en += deltaE;
+			energy[i] = en;
+		}
 		else
 		{
 			double rval = (double)rand()/(double)RAND_MAX;
 			if( pow(E, -beta*deltaE) >= rval )
+			{
 				spconf[rindex] = !spconf[rindex];
+				en += deltaE;
+				energy[i] = en;
+			}
+			else
+				energy[i] = en;
 		}
 
-		printArr(spconf, rows);
+		//printArr(spconf, rows);
 	}
+	
+	printDArr(energy, numItr);
 
 	return 0;
 }
